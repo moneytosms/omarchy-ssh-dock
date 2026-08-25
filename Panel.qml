@@ -79,6 +79,7 @@ Panel {
       if (rec && rec.hidden === true) continue
       out.push({
         alias: alias,
+        name: String(rec && rec.name ? rec.name : ""),
         host: String(rec && rec.host ? rec.host : (imp.host || alias)),
         user: String(rec && rec.user ? rec.user : (imp.user || "")),
         port: Number(rec && rec.port ? rec.port : (imp.port || 22)),
@@ -99,6 +100,7 @@ Panel {
       if (rAlias === "" || seen[rAlias.toLowerCase()] || r.hidden === true) continue
       out.push({
         alias: rAlias,
+        name: String(r.name || ""),
         host: String(r.host || rAlias),
         user: String(r.user || ""),
         port: Number(r.port || 22),
@@ -112,6 +114,17 @@ Panel {
       })
     }
     return out
+  }
+
+  function displayLabel(entry) {
+    if (!entry) return ""
+    var name = String(entry.name || "").trim()
+    if (name !== "") return name
+    var host = String(entry.host || "").trim()
+    if (host !== "" && host !== entry.alias) return host
+    var user = String(entry.user || "").trim()
+    if (user !== "") return user
+    return String(entry.alias || "")
   }
 
   function recordFor(records, alias) {
@@ -138,7 +151,7 @@ Panel {
     var out = []
     for (var i = 0; i < list.length; i++) {
       var e = list[i]
-      var hay = (String(e.alias || "") + " " + String(e.host || "") + " " +
+      var hay = (String(e.alias || "") + " " + String(e.name || "") + " " + String(e.host || "") + " " +
                  (Array.isArray(e.keywords) ? e.keywords.join(" ") : "")).toLowerCase()
       if (hay.indexOf(q) !== -1) out.push(e)
     }
@@ -841,6 +854,10 @@ Panel {
 
     function populateEditor() {
       var e = serverRow.entry
+      editName.text = String(e.name || "")
+      editHost.text = String(e.host || "")
+      editUser.text = String(e.user || "")
+      editPort.text = String(e.port || 22)
       editMode.value = String(e.mode || "default")
       editTerminal.text = String(e.terminal || "")
       editColor.text = String(e.color || "")
@@ -852,6 +869,7 @@ Panel {
     function commitEdit() {
       root.saveRecord(serverRow.alias, {
         alias: serverRow.alias,
+        name: editName.text.trim(),
         host: editHost.text.trim(),
         user: editUser.text.trim(),
         port: parseInt(editPort.text.trim(), 10) || 22,
@@ -902,7 +920,7 @@ Panel {
 
         Text {
           width: parent.width
-          text: (String(serverRow.entry.glyph || "") !== "" ? String(serverRow.entry.glyph) + " " : "") + serverRow.alias
+          text: (String(serverRow.entry.glyph || "") !== "" ? String(serverRow.entry.glyph) + " " : "") + root.displayLabel(serverRow.entry)
           color: root.foreground
           font.family: root.fontFamily
           font.pixelSize: Style.font.body
@@ -934,17 +952,6 @@ Panel {
         }
       }
 
-      PanelActionButton {
-        anchors.right: parent.right
-        anchors.verticalCenter: parent.verticalCenter
-        visible: serverRow.rowHovered || serverRow.editorOpen
-        iconText: "󰏫"
-        foreground: root.foreground
-        hoverColor: Color.accent
-        tooltipText: "Edit"
-        onClicked: serverRow.toggleEditor()
-      }
-
       MouseArea {
         anchors.fill: parent
         hoverEnabled: true
@@ -956,12 +963,31 @@ Panel {
           else root.connectEntry(serverRow.entry)
         }
       }
+
+      PanelActionButton {
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        visible: serverRow.rowHovered || serverRow.editorOpen
+        iconText: "󰏫"
+        foreground: root.foreground
+        hoverColor: Color.accent
+        tooltipText: "Edit"
+        onClicked: serverRow.toggleEditor()
+      }
     }
 
     Column {
       visible: serverRow.editorOpen
       width: parent.width
       spacing: Style.space(8)
+
+      TextField {
+        id: editName
+        width: parent.width
+        placeholderText: "display name (blank = host/user/alias)"
+        foreground: root.foreground
+        font.family: root.fontFamily
+      }
 
       Dropdown {
         id: editMode

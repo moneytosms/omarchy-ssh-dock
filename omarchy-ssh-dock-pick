@@ -1,29 +1,51 @@
 #!/usr/bin/env bash
 # omarchy-ssh-dock-pick: standalone fuzzy picker for SSH Dock servers.
-# Lists ~/.ssh/config hosts via the native omarchy menu, then connects
-# through the widget's IPC (so mode/dryRun/alerts stay in sync with the panel).
+# Lists ~/.ssh/config hosts via the native omarchy menu (merging panel
+# overrides — display name, host/user/port, hidden — from shell.json), then
+# connects through the widget's IPC (so mode/dryRun/alerts stay in sync).
 set -euo pipefail
 
 plugin_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 helper="$plugin_dir/omarchy-ssh-dock-helper"
+shell_json="${OMARCHY_SHELL_JSON:-$HOME/.config/omarchy/shell.json}"
 
-rows=()
-while IFS=$'\t' read -r alias sub; do
-  [[ -z "$alias" ]] && continue
-  rows+=("$alias" "$sub")
-done < <("$helper" | jq -r '.servers[] | [.alias, ((.user // "" | if . == "" then "" else . + "@" end) + (.host // .alias) + ":" + ((.port // 22)|tostring))] | @tsv')
+overrides="[]"
+if [[ -f "$shell_json" ]]; then
+  overrides="$(jq -r '
+    [.. | objects | select(.id? == "io.github.moneytosms.ssh-dock")][0].serversJson // "[]"
+  ' "$shell_json" 2>/dev/null || echo "[]")"
+  [[ -z "$overrides" || "$overrides" == "null" ]] && overrides="[]"
+fi
 
-if (( ${#rows[@]} == 0 )); then
+# Each option is "<glyph>\t<label>\t<subtext>" per omarchy-menu-select's
+# contract; glyph is left empty. Label is the alias itself (so the selection
+# returned always starts with it), subtext is the human-facing name/host info.
+mapfile -t options < <(
+  "$helper" | jq -r --argjson overrides "$overrides" '
+    ($overrides | map({(.alias | ascii_downcase): .}) | add // {}) as $ov
+    | .servers[]
+    | . as $s
+    | ($ov[$s.alias | ascii_downcase] // {}) as $o
+    | select(($o.hidden // false) != true)
+    | (if ($o.host // "") != "" then $o.host else ($s.host // $s.alias) end) as $host
+    | (if ($o.user // "") != "" then $o.user else ($s.user // "") end) as $user
+    | (if ($o.port // 0) > 0 then $o.port else ($s.port // 22) end) as $port
+    | (
+        if ($o.name // "") != "" then $o.name
+        elif ($host != "" and $host != $s.alias) then $host
+        elif ($user != "") then $user
+        else $s.alias
+        end
+      ) as $label
+    | ["", $s.alias, $label + "  ·  " + (if $user != "" then $user + "@" else "" end) + $host + ":" + ($port|tostring)]
+    | @tsv
+  '
+)
+
+if (( ${#options[@]} == 0 )); then
   notify-send "SSH Dock" "No servers found in ~/.ssh/config" 2>/dev/null || echo "SSH Dock: no servers found in ~/.ssh/config" >&2
   exit 1
 fi
-
-# omarchy-menu-select takes flat label/subtext pairs as separate options args;
-# build "<label>\t<subtext>" per option so selection returns the alias first.
-options=()
-for ((i = 0; i < ${#rows[@]}; i += 2)); do
-  options+=("${rows[i]}"$'\t'"${rows[i+1]}")
-done
 
 selection="$(omarchy-menu-select "SSH" "${options[@]}" -- --width 480)" || exit 0
 alias="${selection%%$'\t'*}"
