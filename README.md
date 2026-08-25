@@ -9,7 +9,7 @@ SSH launcher dock for the [Omarchy](https://omarchy.org) bar. Connect to your se
 - Server list auto-imported from `~/.ssh/config` (wildcard/negated patterns skipped)
 - Live session detection via ControlMaster sockets and running `ssh` processes
 - Connection modes: `plain` ssh, `tmux` attach-or-create, `herdr --remote`, or your own command template
-- Per-server overrides and alert lights driven by desktop notifications (planned)
+- Per-server overrides and alert lights driven by desktop notifications
 
 ## Install
 
@@ -24,17 +24,20 @@ Then enable **SSH Dock** from the plugin drawer (or `omarchy plugin enable io.gi
 The widget registers an IPC target, so you can bind panel toggling:
 
 ```
-bind = SUPER, S, exec, omarchy-shell io.github.moneytosms.ssh-dock toggle
+bind = SUPER, S, exec, omarchy-shell io.github.moneytosms.ssh-dock pick
+bind = SUPER+F1, exec, omarchy-shell io.github.moneytosms.ssh-dock connect web01
 ```
 
-Per-server connect shortcuts and a server picker are on the roadmap.
+`pick` opens the panel with the filter focused; `connect <alias>` launches the server directly. Other IPC functions: `toggle`, `echo <alias>` (print the command without running it), `status`, `clear all`, `refresh`, `ping`.
+
+In `herdr` mode servers are launched via `herdr --remote user@host`. Servers can light up their dock entry by emitting desktop notifications that mention their alias or a keyword — e.g. `herdr notification show "web01 cpu high"` locally, or over ssh: `ssh web01 notify-send "deploy" "web01 done"`.
 
 ## Roadmap
 
-- [ ] Connect engine (plain / tmux / herdr / custom template) — click to ssh
-- [ ] Alert lights: widget changes color when a notification mentions a server
-- [ ] Manual servers + per-host overrides (terminal, mode, color/glyph, keywords)
-- [ ] Fuzzy picker + `connect <alias>` IPC for keybinds
+- [x] Connect engine (plain / tmux / herdr / custom template) — click to ssh
+- [x] Alert lights: widget changes color when a notification mentions a server
+- [x] Manual servers + per-host overrides (terminal, mode, color/glyph, keywords)
+- [x] Fuzzy picker + `connect <alias>` IPC for keybinds
 
 ## License
 

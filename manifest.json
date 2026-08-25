@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "io.github.moneytosms.ssh-dock",
   "name": "SSH Dock",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "moneytosms",
   "license": "MIT",
   "homepage": "https://github.com/moneytosms/omarchy-ssh-dock",
@@ -22,7 +22,9 @@
       "connectMode": "plain",
       "customCommand": "",
       "terminalCommand": "",
-      "pollIntervalSec": 15
+      "pollIntervalSec": 15,
+      "serversJson": "[]",
+      "dryRun": false
     },
     "schema": [
       {
@@ -55,6 +57,19 @@
         "max": 120,
         "step": 5,
         "defaultValue": 15
+      },
+      {
+        "key": "serversJson",
+        "type": "string",
+        "defaultValue": "[]",
+        "label": "Servers & overrides (JSON)",
+        "description": "Advanced. Prefer editing in the widget panel. Array of override/manual records keyed by alias."
+      },
+      {
+        "key": "dryRun",
+        "type": "boolean",
+        "defaultValue": false,
+        "label": "Dry run (log commands instead of connecting)"
       }
     ]
   }

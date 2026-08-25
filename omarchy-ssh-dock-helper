@@ -4,7 +4,48 @@
 #   { "state": "ok",
 #     "servers":  [ { "alias": "web01", "host": "…", "user": "…", "port": 22 } ],
 #     "sessions": [ "web01", … ] }
+# With `alerts <since-ms>`: emits one JSON array of desktop-notification
+# toasts (JSON files in $OMARCHY_NOTIFICATIONS_DIR, default
+# ~/.local/state/omarchy/notifications/) modified after since-ms,
+# newest last:
+#   [ { "app": "herdr", "summary": "…", "body": "…", "ts": 123456789 }, … ]
 set -euo pipefail
+
+# Alert scan mode: omarchy-ssh-dock-helper alerts <since-ms>.
+if [[ "${1:-}" == "alerts" ]]; then
+  since_ms="${2:-0}"
+  notifs_dir="${OMARCHY_NOTIFICATIONS_DIR:-$HOME/.local/state/omarchy/notifications}"
+
+  alerts_tmp="/tmp/.omarchy-ssh-dock-alerts.$$"
+  : > "$alerts_tmp"
+  if [[ -d "$notifs_dir" ]] && command -v jq >/dev/null; then
+    {
+      # mtime (sec.nsec) + path per live toast file.
+      find "$notifs_dir" -maxdepth 1 -type f -printf '%T@\t%p\n' 2>/dev/null || true
+    } |
+      # Keep entries newer than since-ms (epoch ms); emit "path\tts".
+      awk -F'\t' -v since="$since_ms" '
+        NF == 2 { ts = int($1 * 1000); if (ts > since + 0) print $2 "\t" ts }
+      ' |
+      # One jq per file: unparseable files error out and are skipped.
+      while IFS=$'\t' read -r f ts; do
+        jq -c --argjson ts "$ts" '
+          { app:     ((.app_name // "") | tostring),
+            summary: ((.summary   // "") | tostring),
+            body:    ((.body      // "") | tostring),
+            ts:      $ts }
+        ' "$f" >> "$alerts_tmp" 2>/dev/null || true
+      done || true
+  fi
+  jq -Rsc '
+    split("\n")
+    | map(select(length > 0))
+    | map(fromjson)
+    | sort_by(.ts)
+  ' "$alerts_tmp"
+  rm -f "$alerts_tmp"
+  exit 0
+fi
 
 ssh_config="${SSH_CONFIG:-$HOME/.ssh/config}"
 
