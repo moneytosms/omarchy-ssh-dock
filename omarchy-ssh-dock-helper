@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# omarchy-ssh-dock-helper: inventory + session scan for SSH Dock.
+# Emits one JSON object on stdout:
+#   { "state": "ok",
+#     "servers":  [ { "alias": "web01", "host": "…", "user": "…", "port": 22 } ],
+#     "sessions": [ "web01", … ] }
+set -euo pipefail
+
+ssh_config="${SSH_CONFIG:-$HOME/.ssh/config}"
+
+servers_json="[]"
+if [[ -f "$ssh_config" ]] && command -v jq >/dev/null; then
+  # Top-level Host entries. Skip wildcard/negated patterns. Track
+  # HostName/User/Port per entry (indented or same-file style).
+  servers_json="$(awk '
+    {
+      raw = $0
+      indent = (raw ~ /^[[:space:]]/)
+      gsub(/^[[:space:]]+/, "", raw); gsub(/[[:space:]]+$/, "", raw)
+      if (raw == "") { next }
+      n = split(raw, tok, /[[:space:]]+/)
+      key = tolower(tok[1])
+      val = ""
+      if (n > 1) { val = tok[2] }
+      if (!indent && key == "host") {
+        if (alias != "") print alias "\t" host "\t" user "\t" port
+        alias = val; host = ""; user = ""; port = ""
+        if (alias == "" || alias ~ /[*!]/) { alias = "" }
+      } else if (alias != "" && n > 1) {
+        if (key == "hostname") { host = val }
+        else if (key == "user") { user = val }
+        else if (key == "port") { port = val }
+      }
+    }
+    END { if (alias != "") print alias "\t" host "\t" user "\t" port }
+  ' "$ssh_config" | jq -Rsc '
+    split("\n")
+    | map(select(length > 0))
+    | map(split("\t"))
+    | map({
+        alias: .[0],
+        host:  (.[1] // "" | if . == "" then null else . end),
+        user:  (.[2] // "" | if . == "" then null else . end),
+        port:  (.[3] // "" | if . == "" then null else (tonumber? // 22) end)
+      })
+    | map(.host //= .alias)
+    | map(.port //= 22)
+  ')"
+fi
+
+sessions_json="[]"
+if command -v jq >/dev/null; then
+  {
+    # ControlMaster sockets: ~/.ssh/sockets/<name>--<port>:<port> style names.
+    if [[ -d "$HOME/.ssh/sockets" ]]; then
+      find "$HOME/.ssh/sockets" -maxdepth 1 -type s -printf '%f\n' 2>/dev/null |
+        sed -E 's/--[0-9]+:[0-9]+$//'
+    fi
+    # Live ssh processes: extract user@host / host tokens, skip tunnels/scp.
+    pgrep -a ssh 2>/dev/null | sed -E 's/^[0-9]+ //' |
+      grep -vE '(^| )(scp|sftp|sshfs)( |$)| -(W|L|D|R|N)[[:space:]=]' || true |
+      tr ' ' '\n' | grep -E '^([^@[:space:]]+@)?[^[:space:]@-][^[:space:]]*$' || true |
+      sed -E 's/^.*@//' | grep -vE '^(ssh|-)' || true
+  } | sort -u > /tmp/.omarchy-ssh-dock-sessions.$$ || true
+  sessions_json="$(jq -Rsc 'split("\n") | map(select(length > 0))' /tmp/.omarchy-ssh-dock-sessions.$$)"
+  rm -f /tmp/.omarchy-ssh-dock-sessions.$$
+fi
+
+jq -n --argjson s "$servers_json" --argjson c "$sessions_json" \
+  '{state: "ok", servers: $s, sessions: $c}'

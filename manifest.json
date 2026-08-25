@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.moneytosms.ssh-dock",
+  "name": "SSH Dock",
+  "version": "0.1.0",
+  "author": "moneytosms",
+  "license": "MIT",
+  "homepage": "https://github.com/moneytosms/omarchy-ssh-dock",
+  "description": "SSH launcher dock for the Omarchy bar — connect to your servers with a click, lights up when they ping you, tracks active sessions",
+  "kinds": ["bar-widget"],
+  "entryPoints": {
+    "barWidget": "Panel.qml"
+  },
+  "barWidget": {
+    "displayName": "SSH Dock",
+    "description": "Connect to your servers from the bar; lights up when a server sends a desktop notification",
+    "category": "Development",
+    "aliases": ["ssh", "servers", "dock", "remote", "fleet"],
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {
+      "connectMode": "plain",
+      "customCommand": "",
+      "terminalCommand": "",
+      "pollIntervalSec": 15
+    },
+    "schema": [
+      {
+        "key": "connectMode",
+        "type": "enum",
+        "label": "Connection mode",
+        "options": ["plain", "tmux", "herdr", "custom"],
+        "defaultValue": "plain",
+        "description": "plain: ssh straight in. tmux: attach or create the session. herdr: herdr --remote attach. custom: your own template command."
+      },
+      {
+        "key": "customCommand",
+        "type": "string",
+        "label": "Custom command template (custom mode)",
+        "defaultValue": "",
+        "description": "Supports {alias} {host} {user} {port} {key} placeholders."
+      },
+      {
+        "key": "terminalCommand",
+        "type": "string",
+        "label": "Terminal command (blank = system default)",
+        "defaultValue": "",
+        "description": "Blank uses omarchy-launch-terminal (xdg-terminal-exec). Example: foot -- ssh …"
+      },
+      {
+        "key": "pollIntervalSec",
+        "type": "integer",
+        "label": "Session scan interval (seconds)",
+        "min": 5,
+        "max": 120,
+        "step": 5,
+        "defaultValue": 15
+      }
+    ]
+  }
+}
