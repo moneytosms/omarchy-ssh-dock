@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # omarchy-ssh-dock-pick: standalone fuzzy picker for SSH Dock servers.
-# Lists ~/.ssh/config hosts via the native omarchy menu (merging panel
-# overrides — display name, host/user/port, hidden — from shell.json), then
-# connects through the widget's IPC (so mode/dryRun/alerts stay in sync).
+# Lists ~/.ssh/config hosts plus panel-only manual servers via the native
+# omarchy menu (merging panel overrides — display name, host/user/port,
+# hidden — from shell.json), then connects through the widget's IPC (so
+# mode/dryRun/alerts stay in sync).
 set -euo pipefail
 
 plugin_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -23,7 +24,8 @@ fi
 mapfile -t options < <(
   "$helper" | jq -r --argjson overrides "$overrides" '
     ($overrides | map({(.alias | ascii_downcase): .}) | add // {}) as $ov
-    | .servers[]
+    | (.servers | map(.alias | ascii_downcase)) as $sshAliases
+    | (.servers + ($overrides | map(select(. as $o | ($sshAliases | index($o.alias | ascii_downcase)) | not))))[]
     | . as $s
     | ($ov[$s.alias | ascii_downcase] // {}) as $o
     | select(($o.hidden // false) != true)
