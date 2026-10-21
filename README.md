@@ -1,8 +1,15 @@
-# SSH Dock
+<h1 align="center">SSH Dock</h1>
+
+<p align="center">
+  <img src="./assets/readme/hero.svg" width="100%" alt="SSH Dock: a server launcher for the Omarchy bar with a server list, live session dots and alert lights.">
+</p>
 
 SSH launcher dock for the [Omarchy](https://omarchy.org) bar. Connect to your servers with a click, see which sessions are live, and get a light when a server pings you.
 
-![preview](preview.png)
+<p align="center">
+  <img src="./docs/screenshot-list.png" height="260" alt="SSH Dock panel listing servers with a filter box">
+  <img src="./docs/screenshot-edit.png" height="260" alt="SSH Dock per-server editor">
+</p>
 
 ## Features
 
@@ -11,6 +18,12 @@ SSH launcher dock for the [Omarchy](https://omarchy.org) bar. Connect to your se
 - Connection modes: `plain` ssh, `tmux` attach-or-create, `herdr --remote`, or your own command template
 - Per-server overrides (display name, host/user/port, terminal, mode, color/glyph, keywords, hidden) and alert lights driven by desktop notifications
 - Standalone fuzzy picker command, independent of the bar panel
+
+## How it works
+
+<p align="center">
+  <img src="./assets/readme/flow.svg" width="100%" alt="Servers from ssh config and overrides feed SSH Dock, which launches plain ssh, tmux, herdr or a custom command in your terminal; notifications that mention a server light its entry.">
+</p>
 
 ## Requirements
 
