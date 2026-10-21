@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320" role="img" aria-labelledby="t d">
+  <title id="t">How SSH Dock works</title>
+  <desc id="d">Servers from ~/.ssh/config and per-server overrides feed the dock. Clicking a server launches it in your terminal using plain ssh, tmux, herdr or a custom command. Desktop notifications that mention a server light up its entry.</desc>
+  <rect width="1200" height="320" rx="26" fill="#242b30"/>
+  <rect x="0.5" y="0.5" width="1199" height="319" rx="25.5" fill="none" stroke="#3b464d"/>
+  <g font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="19" fill="#e8dfcc" text-anchor="middle">
+    <g stroke="#5fa8a0" stroke-width="3" fill="none" stroke-linecap="round"><path d="M290 110 H400"/><path d="M290 210 H340 V110"/><path d="M640 110 H730 V70 H800"/><path d="M730 110 V150 H800"/><path d="M730 110 V230 H800"/><path d="M730 110 V310" opacity="0"/></g>
+    <g fill="#2c353b" stroke="#4a565d">
+      <rect x="50" y="80" width="240" height="60" rx="12"/><rect x="50" y="180" width="240" height="60" rx="12"/><rect x="400" y="70" width="240" height="80" rx="12"/>
+      <rect x="800" y="40" width="300" height="60" rx="12"/><rect x="800" y="120" width="300" height="60" rx="12"/><rect x="800" y="200" width="300" height="60" rx="12"/>
+    </g>
+    <rect x="400" y="70" width="240" height="80" rx="12" fill="#2c353b" stroke="#5fa8a0" stroke-width="2"/>
+    <text x="170" y="117">~/.ssh/config</text><text x="170" y="217">per-server overrides</text>
+    <text x="520" y="105" font-weight="700">SSH Dock</text><text x="520" y="131" font-size="14" fill="#8a9a9a">bar panel · picker · IPC</text>
+    <text x="950" y="77">plain ssh</text><text x="950" y="157">tmux · herdr</text><text x="950" y="237">custom template</text>
+    <text x="950" y="290" font-size="14" fill="#8a9a9a">launched in your terminal</text>
+    <g transform="translate(400 200)"><rect width="240" height="60" rx="12" fill="#2c353b" stroke="#e0a458"/><text x="120" y="37" fill="#e0a458">notifications</text></g>
+    <path d="M520 200 V150" stroke="#e0a458" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <text x="520" y="290" font-size="14" fill="#e0a458">mention a server → its light turns on</text>
+  </g>
+</svg>
